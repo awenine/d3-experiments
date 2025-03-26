@@ -27,13 +27,16 @@ export function renderChart(containerElement) {
   const y = d3.scaleLinear()
       // .domain([0, 100])
       //? using the notional, without summing
-      .domain([0, d3.max(allProductsData, d => d[PROPERTY])])
+      // .domain([0, d3.max(allProductsData, d => d[PROPERTY])])
+      //? using the notional summed
+      .domain([0, d3.sum(allProductsData, d => d[PROPERTY])])
       .range([height - marginBottom, marginTop]);
 
   // create a line
   const line = d3.line()
     .x(d => x(d.date_time))
-    .y(d => y(d[PROPERTY])) 
+    // .y(d => y(d[PROPERTY])) 
+    .y((d,i,arr) => y(d3.cumsum(arr, d => d[PROPERTY])[i])) 
 
 
   // Create the SVG container.

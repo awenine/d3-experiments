@@ -9,4 +9,6 @@ document.querySelector('#app').innerHTML = `
   </div>
 `
 
+
+
 renderChart(document.querySelector('#app'))

@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@rollup/plugin-dsv": "^3.0.5",
     "vite": "^6.2.0"
   },
   "dependencies": {

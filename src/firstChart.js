@@ -32,17 +32,20 @@ export function renderChart(containerElement) {
       .domain([0, d3.sum(allProductsData, d => d[PROPERTY])])
       .range([height - marginBottom, marginTop]);
 
+  // Create a mapped version of the data with a new property holding the running sum - this way it can be used for both the line and the dots
+  const summedPropertyData = allProductsData.map((obj,i,arr) => ({...obj, summed_property: d3.cumsum(arr, d => d[PROPERTY])[i]}))
+
   // create a line
   const line = d3.line()
     .x(d => x(d.date_time))
-    // .y(d => y(d[PROPERTY])) 
-    .y((d,i,arr) => y(d3.cumsum(arr, d => d[PROPERTY])[i])) 
+    .y(d => y(d.summed_property)) 
+    // .y((_d,i,arr) => y(d3.cumsum(arr, d => d[PROPERTY])[i])) 
 
 
   // Create the SVG container.
   const svg = d3.create("svg")
       .attr("width", width)
-      .attr("height", height);
+      .attr("height", height)
 
   // Add the x-axis.
   svg.append("g")
@@ -54,17 +57,34 @@ export function renderChart(containerElement) {
       .attr("transform", `translate(${marginLeft},0)`)
       .call(d3.axisLeft(y));
 
+  // Testing adding circles on each point
+  svg.append("g")
+    .selectAll("circle")
+    .data(summedPropertyData)
+    .join("circle")
+      .attr("fill", "none")
+      .attr("stroke", "yellow")
+      .attr("r", 3)
+      .attr("stroke-width", 1)
+      .attr("cx", d => x(d.date_time))
+      .attr("cy", d => y(d.summed_property))
+      
+
+  // Add the line
   svg.append("path")
     .attr("fill", "none")
     .attr("stroke", "chartreuse")
     .attr("stroke-width", 1.5)
-    .attr("d", line(allProductsData))
+    .attr("d", line(summedPropertyData))
 
 
   // Append the SVG element.
   containerElement.append(svg.node());
   
 }
+
+
+// FOR QUOKKA DEBUGGING & TESTING
 
 const y = d3.scaleUtc()
 .domain([new Date("2023-01-01"), new Date("2024-01-01")])
@@ -86,3 +106,10 @@ console.log(d3.csvParse(allProductsString));
 
 
 console.log(d3.line() );
+
+
+
+
+
+
+

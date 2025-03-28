@@ -16,6 +16,18 @@ export function renderChart(containerElement) {
 
   // const to use to define the property we are charting (could be passed into function)
   const PROPERTY = "notional"
+  // const PROPERTY = "contractSize"
+
+  // Create a mapped version of the data with a new property holding the running sum - this way it can be used for both the line and the dots
+  // const summedPropertyData = allProductsData.map((obj,i,arr) => ({...obj, summed_property: d3.cumsum(arr, d => d[PROPERTY])[i]}))
+
+  // we want to split the data and then create a line for each, and have the summed value available on each group for both lines and dots
+
+  const rollupSumReducer = (groupArray) => {
+    return groupArray.map((obj,i,arr) => ({...obj, summed_property: d3.cumsum(arr, d => d[PROPERTY])[i]}))
+  }
+
+  const mappedData = d3.rollup(allProductsData, rollupSumReducer, d => d.symbol)
 
   // Declare the x (horizontal position) scale.
   const x = d3.scaleUtc()
@@ -29,9 +41,11 @@ export function renderChart(containerElement) {
   const y = d3.scaleLinear()
       // .domain([0, 100])
       //? using the notional, without summing
-      .domain([0, d3.max(allProductsData, d => d[PROPERTY])])
+      // .domain([0, d3.max(allProductsData, d => d[PROPERTY])])
       //? using the notional summed
       // .domain([0, d3.sum(allProductsData, d => d[PROPERTY])])
+      //? using max summed value of each group 
+      .domain([0, d3.max([...mappedData.values()], d => d3.max(d, trade => trade.summed_property))])
       .range([height - marginBottom, marginTop]);
 
   // Create a colour scale to assign different paths to
@@ -39,18 +53,12 @@ export function renderChart(containerElement) {
     .domain([0,2])
     .range(["red", "yellow"])
 
-  // Create a mapped version of the data with a new property holding the running sum - this way it can be used for both the line and the dots
-  const summedPropertyData = allProductsData.map((obj,i,arr) => ({...obj, summed_property: d3.cumsum(arr, d => d[PROPERTY])[i]}))
-
-  // we want to split the data and then create a line for each, and have the summed value available on each group for both lines and dots
-  const mappedData = d3.rollup(allProductsData, v => v, d => d.symbol)
-
 
   // create a line
   const line = d3.line()
     .x(d => x(d.date_time))
-    .y(d => y(d[PROPERTY])) 
-    // .y(d => y(d.summed_property)) 
+    // .y(d => y(d[PROPERTY])) 
+    .y(d => y(d.summed_property)) 
     // .y((_d,i,arr) => y(d3.cumsum(arr, d => d[PROPERTY])[i])) 
 
 
@@ -70,17 +78,17 @@ export function renderChart(containerElement) {
       .call(d3.axisLeft(y));
 
   // Testing adding circles on each point
-  svg.append("g")
-    .selectAll("circle")
-    // .data(summedPropertyData)
-    .data(mappedData.get('BTCUSDT'))
-    .join("circle")
-      .attr("fill", "none")
-      .attr("stroke", "yellow")
-      .attr("r", 3)
-      .attr("stroke-width", 1)
-      .attr("cx", d => x(d.date_time))
-      .attr("cy", d => y(d[PROPERTY]))
+  // svg.append("g")
+  //   .selectAll("circle")
+  //   // .data(summedPropertyData)
+  //   .data(mappedData.get('BTCUSDT'))
+  //   .join("circle")
+  //     .attr("fill", "none")
+  //     .attr("stroke", "yellow")
+  //     .attr("r", 3)
+  //     .attr("stroke-width", 1)
+  //     .attr("cx", d => x(d.date_time))
+  //     .attr("cy", d => y(d[PROPERTY]))
 
     // Test adding text at the same points  
     // svg.append("g")

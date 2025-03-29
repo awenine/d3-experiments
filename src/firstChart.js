@@ -22,7 +22,6 @@ export function renderChart(containerElement) {
   // const summedPropertyData = allProductsData.map((obj,i,arr) => ({...obj, summed_property: d3.cumsum(arr, d => d[PROPERTY])[i]}))
 
   // we want to split the data and then create a line for each, and have the summed value available on each group for both lines and dots
-
   const rollupSumReducer = (groupArray) => {
     return groupArray.map((obj,i,arr) => ({...obj, summed_property: d3.cumsum(arr, d => d[PROPERTY])[i]}))
   }
@@ -60,6 +59,13 @@ export function renderChart(containerElement) {
     // .y(d => y(d[PROPERTY])) 
     .y(d => y(d.summed_property)) 
     // .y((_d,i,arr) => y(d3.cumsum(arr, d => d[PROPERTY])[i])) 
+
+
+  // create a brush and connect to callbacks, to later attach to the SVG
+  const brush = d3.brushX()
+    .extent([[marginLeft, marginTop], [width -marginRight, height - marginBottom]])
+    // .on("brush", brushed)
+    // .on("end", brushended);
 
 
   // Create the SVG container.
@@ -118,6 +124,10 @@ export function renderChart(containerElement) {
       .attr("stroke", (_d,i) => colourSelect(i))
       .attr("stroke-width", 1.5)
       .attr("d", line)
+
+
+  svg.append("g")
+    .call(brush)
 
 
 

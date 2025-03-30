@@ -83,18 +83,34 @@ export function renderChart(containerElement) {
       .attr("transform", `translate(${marginLeft},0)`)
       .call(d3.axisLeft(y));
 
+  
+
+  
+  // add brush to SVG
+  svg.append("g")
+    .call(brush)
+
   // Testing adding circles on each point
-  // svg.append("g")
-  //   .selectAll("circle")
-  //   // .data(summedPropertyData)
-  //   .data(mappedData.get('BTCUSDT'))
-  //   .join("circle")
-  //     .attr("fill", "none")
-  //     .attr("stroke", "yellow")
-  //     .attr("r", 3)
-  //     .attr("stroke-width", 1)
-  //     .attr("cx", d => x(d.date_time))
-  //     .attr("cy", d => y(d[PROPERTY]))
+  const dots = svg.append("g")
+    .selectAll("g")
+    .data([...mappedData.values()])
+    .join("g")
+    .attr("stroke", (_d, i) => colourSelect(i))
+    .selectAll("circle")
+    // .data(summedPropertyData)
+    .data((d,i) => {
+      // console.log("d:",Object.assign(d, {groupNumber: i}))
+      return Object.assign(d, {groupNumber: i})
+    }) //! USE flatRollup or similar, to do this?
+    .join("circle")
+      .attr("fill", "none")
+      .attr("r", 3)
+      .attr("stroke-width", 1)
+      .attr("cx", d => x(d.date_time))
+      .attr("cy", d => y(d.summed_property))
+      .on("mouseover", () => {
+        console.log("bang")
+      } )
 
     // Test adding text at the same points  
     // svg.append("g")
@@ -126,10 +142,24 @@ export function renderChart(containerElement) {
       .attr("d", line)
 
 
-  svg.append("g")
-    .call(brush)
 
+  // 
+  // svg
+    // .on("pointerenter", pointerentered)
+    // .on("pointermove", pointermoved)
+    // .on("pointerleave", pointerleft)
+    // .on("touchstart", event => event.preventDefault());
 
+  function pointermoved(event) {
+    console.log("event: ",d3.pointer(event));
+    const [xm, ym] = d3.pointer(event);
+    const i = d3.leastIndex(points, ([x, y]) => Math.hypot(x - xm, y - ym));
+    // const [x, y, k] = points[i];
+    // path.style("stroke", ({z}) => z === k ? null : "#ddd").filter(({z}) => z === k).raise();
+    // dot.attr("transform", `translate(${x},${y})`);
+    // dot.select("text").text(k);
+    // svg.property("value", unemployment[i]).dispatch("input", {bubbles: true});
+  }
 
   // Append the SVG element.
   containerElement.append(svg.node());

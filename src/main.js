@@ -5,7 +5,7 @@ import './chartStyles.css'
 document.querySelector('#app').innerHTML = `
   <div>
     <p>
-      Test for d3
+      D3 Sandbox
     </p>
   </div>
 `

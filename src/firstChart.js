@@ -94,7 +94,7 @@ export function renderChart(containerElement) {
   // Add the y-axis.
   svg.append("g")
       .attr("transform", `translate(${marginLeft},0)`)
-      .call(d3.axisLeft(y));
+      .call(d3.axisLeft(y).tickFormat(d3.format(".2s")));
 
   
 

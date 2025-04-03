@@ -1,8 +1,12 @@
 import * as d3 from "d3";
 import allProductsString from "./testdata/allProductsString";
+import binanceAllProductsString from "./testdata/BINANCE_AllProducts-string";
 
 
-const allProductsData = d3.csvParse(allProductsString)
+
+
+// const allProductsData = d3.csvParse(allProductsString)
+const allProductsData = d3.csvParse(binanceAllProductsString)
 
 export function renderChart(containerElement) {
 
@@ -18,6 +22,10 @@ export function renderChart(containerElement) {
   const PROPERTY = "notional"
   // const PROPERTY = "contractSize"
 
+  // property to group by
+  // const GROUPING_PROPERTY = "symbol"
+  const GROUPING_PROPERTY = "sub_type"
+
   // Create a mapped version of the data with a new property holding the running sum - this way it can be used for both the line and the dots
   // const summedPropertyData = allProductsData.map((obj,i,arr) => ({...obj, summed_property: d3.cumsum(arr, d => d[PROPERTY])[i]}))
 
@@ -26,7 +34,7 @@ export function renderChart(containerElement) {
     return groupArray.map((obj,i,arr) => ({...obj, summed_property: d3.cumsum(arr, d => d[PROPERTY])[i]}))
   }
 
-  const mappedData = d3.rollup(allProductsData, rollupSumReducer, d => d.symbol)
+  const mappedData = d3.rollup(allProductsData.sort((a,b) => d3.ascending(a.date_time, b.date_time)), rollupSumReducer, d => d[GROUPING_PROPERTY])
 
   // Declare the x (horizontal position) scale.
   const x = d3.scaleUtc()
@@ -48,9 +56,12 @@ export function renderChart(containerElement) {
       .range([height - marginBottom, marginTop]);
 
   // Create a colour scale to assign different paths to
-  const colourSelect = d3.scaleLinear()
-    .domain([0,2])
-    .range(["red", "yellow"])
+  // const colourSelect = d3.scaleLinear()
+  //   .domain([0,2])
+  //   .range(["red", "yellow"])
+
+  // using Rainbow preset
+  const colourSelect = d3.scaleSequential(d3.interpolateRainbow).domain([0, mappedData.size])
 
 
   // create a line
@@ -65,7 +76,9 @@ export function renderChart(containerElement) {
   const brush = d3.brushX()
     .extent([[marginLeft, marginTop], [width -marginRight, height - marginBottom]])
     // .on("brush", brushed)
-    // .on("end", brushended);
+    .on("end", (e) => {
+      console.log("brush end arg:",e);
+    });
 
 
   // Create the SVG container.
@@ -95,7 +108,7 @@ export function renderChart(containerElement) {
     .selectAll("g")
     .data([...mappedData.values()])
     .join("g")
-    .attr("stroke", (_d, i) => colourSelect(i))
+    .attr("fill", (_d, i) => colourSelect(i))
     .selectAll("circle")
     // .data(summedPropertyData)
     .data((d,i) => {
@@ -103,14 +116,34 @@ export function renderChart(containerElement) {
       return Object.assign(d, {groupNumber: i})
     }) //! USE flatRollup or similar, to do this?
     .join("circle")
-      .attr("fill", "none")
-      .attr("r", 3)
+      .attr("r", 2)
       .attr("stroke-width", 1)
       .attr("cx", d => x(d.date_time))
       .attr("cy", d => y(d.summed_property))
-      .on("mouseover", () => {
-        console.log("bang")
-      } )
+      // .style("opacity", 0)
+      .on("mouseover", (d) => {
+        d3.select(d.target)
+          .transition()
+          .duration('200')
+          // .style("opacity", 1)
+          .attr("r", 7)
+      })
+      .on("mouseout", (d) => {
+        d3.select(d.target)
+          .transition()
+          .duration('200')
+          // .style("opacity", 0)
+          .attr("r", 2)
+      })
+
+
+    const labels = svg.append("g")
+      .selectAll("text")
+      .data([...mappedData.values()])
+      .join("text")
+        .attr("x", (d) => x(d[d.length-1].date_time))
+        .attr("y", (d) => y(d[d.length-1].summed_property))
+        .attr("text", "TEST")
 
     // Test adding text at the same points  
     // svg.append("g")

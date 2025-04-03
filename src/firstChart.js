@@ -6,10 +6,11 @@ import binanceAllProductsString from "./testdata/BINANCE_AllProducts-string";
 
 
 // const allProductsData = d3.csvParse(allProductsString)
-const allProductsData = d3.csvParse(binanceAllProductsString)
 
-export function renderChart(containerElement) {
-
+export function renderChart(containerElement, dataString, property, groupingProperty, showLabels=false) {
+  
+  const allProductsData = d3.csvParse(dataString)
+  
   // Declare the chart dimensions and margins.
   const width = 640;
   const height = 400;
@@ -19,22 +20,26 @@ export function renderChart(containerElement) {
   const marginLeft = 40;
 
   // const to use to define the property we are charting (could be passed into function)
-  const PROPERTY = "notional"
-  // const PROPERTY = "contractSize"
+  // const PROPERTY = "notional"
+  const PROPERTY = "contractSize"
 
   // property to group by
-  // const GROUPING_PROPERTY = "symbol"
-  const GROUPING_PROPERTY = "sub_type"
+  const GROUPING_PROPERTY = "symbol"
+  // const GROUPING_PROPERTY = "sub_type"
+
+  //  toggle labels
+  // const showLabels = false
+  // const showLabels = true
 
   // Create a mapped version of the data with a new property holding the running sum - this way it can be used for both the line and the dots
   // const summedPropertyData = allProductsData.map((obj,i,arr) => ({...obj, summed_property: d3.cumsum(arr, d => d[PROPERTY])[i]}))
 
   // we want to split the data and then create a line for each, and have the summed value available on each group for both lines and dots
   const rollupSumReducer = (groupArray) => {
-    return groupArray.map((obj,i,arr) => ({...obj, summed_property: d3.cumsum(arr, d => d[PROPERTY])[i]}))
+    return groupArray.map((obj,i,arr) => ({...obj, summed_property: d3.cumsum(arr, d => d[property])[i]}))
   }
 
-  const mappedData = d3.rollup(allProductsData.sort((a,b) => d3.ascending(a.date_time, b.date_time)), rollupSumReducer, d => d[GROUPING_PROPERTY])
+  const mappedData = d3.rollup(allProductsData.sort((a,b) => d3.ascending(a.date_time, b.date_time)), rollupSumReducer, d => d[groupingProperty])
 
   // Declare the x (horizontal position) scale.
   const x = d3.scaleUtc()
@@ -137,13 +142,17 @@ export function renderChart(containerElement) {
       })
 
 
-    const labels = svg.append("g")
-      .selectAll("text")
-      .data([...mappedData.values()])
-      .join("text")
-        .attr("x", (d) => x(d[d.length-1].date_time))
-        .attr("y", (d) => y(d[d.length-1].summed_property))
-        .attr("text", "TEST")
+      if (showLabels) {
+        const labels = svg.append("g")
+          .selectAll("text")
+          .data([...mappedData.values()])
+          .join("text")
+            .attr("x", (d) => x(d[d.length-1].date_time) + 5)
+            .attr("y", (d) => y(d[d.length-1].summed_property))
+            .attr("fill", (_d, i) => colourSelect(i))
+            .attr("font-size", "10")
+            .text(d => d[0][groupingProperty])
+      }
 
     // Test adding text at the same points  
     // svg.append("g")
@@ -194,7 +203,12 @@ export function renderChart(containerElement) {
     // svg.property("value", unemployment[i]).dispatch("input", {bubbles: true});
   }
 
+  // create basic title 
+  let p = document.createElement("p");
+  p.append(`${property} grouped by ${groupingProperty}`); 
+
   // Append the SVG element.
+  containerElement.append(p);
   containerElement.append(svg.node());
   
 }
@@ -218,14 +232,14 @@ console.log(colorScale(32));
 // console.log(csvUrl);
 // const csv = d3.csv(csvUrl)
 
-console.log(d3.csvParse(allProductsString));
+// console.log(d3.csvParse(allProductsString));
 
 
 console.log(d3.line() );
 
-const mappedData = d3.rollup(allProductsData, v => v, d => d.symbol)
+// const mappedData = d3.rollup(allProductsData, v => v, d => d.symbol)
 
-console.log(mappedData);
+// console.log(mappedData);
 
 // console.log(d3.flatRollup(allProductsData, v => v, d => d.symbol));
 
